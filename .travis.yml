@@ -1,0 +1,23 @@
+language: generic
+sudo: required
+servcies:
+   - docker
+
+before_install:
+   - docker build -t takikayak/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+   - docker run -e CI=true takikayak/react-test npm test -- --coverage
+
+after_success:
+   - docker build -t takikayak/multi-client ./client
+   - docker build -t takikayak/multi-nginx ./nginx
+   - docker build -t takikayak/multi-server ./server
+   - docker build -t takikayak/multi-worker ./worker
+# log in to the docker CLI
+   - echo "$DOCKER_PASWORD" | docker login -u "$DOCKER_ID" --password-stdin
+# take those images and push them to dokcer hub
+   - docker push takikayak/multi-client
+   - docker push takikayak/multi-nginx
+   - docker push takikayak/multi-server
+   - docker push takikayak/multi-worker
